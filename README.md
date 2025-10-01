@@ -27,9 +27,15 @@ A professional full-stack web application for task management with intelligent w
 
 <img width="1548" height="209" alt="Screenshot 2025-10-01 114826" src="https://github.com/user-attachments/assets/751e2e65-627a-4994-933a-3522f099baa2" />
 
-#fig 3: auto updated date -> Monday (10/11/2025)
+# fig 3: auto updated date -> Monday (10/11/2025)
 
 <img width="1565" height="184" alt="Screenshot 2025-10-01 114844" src="https://github.com/user-attachments/assets/5ad00253-dd39-4045-86ef-ed2b84db2927" />
+
+
+
+
+# demo video
+https://drive.google.com/file/d/1SC1f6CHms0cnMPt1CkNMFb33BT_bwn1E/view?usp=drive_link
 
 
 
