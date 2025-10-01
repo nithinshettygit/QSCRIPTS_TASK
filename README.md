@@ -19,10 +19,18 @@ A professional full-stack web application for task management with intelligent w
 - **⚡ Fast Performance**: Optimized React components with efficient state management
 - **🎯 Intuitive Interface**: User-friendly task management workflow
 
+# fig 1: home page -> list of tasks
 
+<img width="1738" height="907" alt="Screenshot 2025-10-01 114751" src="https://github.com/user-attachments/assets/89a0d4c4-b661-4454-a706-a307651dabc0" />
 
+# fig 2: editing task date -> satuday (08/11/2025)
 
-<img width="1920" height="1080" alt="task-management" src="https://github.com/user-attachments/assets/d225cd06-4c50-4aba-9266-090f0bf49fde" />
+<img width="1548" height="209" alt="Screenshot 2025-10-01 114826" src="https://github.com/user-attachments/assets/751e2e65-627a-4994-933a-3522f099baa2" />
+
+#fig 3: auto updated date -> Monday (10/11/2025)
+
+<img width="1565" height="184" alt="Screenshot 2025-10-01 114844" src="https://github.com/user-attachments/assets/5ad00253-dd39-4045-86ef-ed2b84db2927" />
+
 
 
 ## 🏗️ Architecture
