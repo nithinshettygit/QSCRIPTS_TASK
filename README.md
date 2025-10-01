@@ -19,6 +19,12 @@ A professional full-stack web application for task management with intelligent w
 - **⚡ Fast Performance**: Optimized React components with efficient state management
 - **🎯 Intuitive Interface**: User-friendly task management workflow
 
+
+
+
+<img width="1920" height="1080" alt="task-management" src="https://github.com/user-attachments/assets/d225cd06-4c50-4aba-9266-090f0bf49fde" />
+
+
 ## 🏗️ Architecture
 
 ### Backend (FastAPI)
