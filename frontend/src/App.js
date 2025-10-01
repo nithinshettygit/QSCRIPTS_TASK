@@ -60,7 +60,14 @@ function App() {
     if (!editingTask) return;
 
     try {
-      const updatedTask = await saveTask(editingTask);
+      // Send only the task ID and due date for updates
+      const updateData = {
+        id: editingTask.id,
+        name: editingTask.name, // Keep name for validation
+        due_date: editingTask.due_date
+      };
+      
+      const updatedTask = await saveTask(updateData);
       setTasks(tasks.map(task => 
         task.id === updatedTask.id ? updatedTask : task
       ));
@@ -83,8 +90,8 @@ function App() {
 
   // Add new task
   const handleAddTask = async () => {
-    if (!newTask.name.trim() || !newTask.due_date) {
-      setError('Please fill in task name and due date');
+    if (!newTask.name.trim()) {
+      setError('Please fill in task name');
       return;
     }
 
@@ -134,7 +141,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           Project Data - Due Date Adjuster
         </h1>
@@ -191,15 +198,15 @@ function App() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
-                <input
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input
+                          type="date"
+                          value={newTask.due_date}
+                          onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                 <input
@@ -276,34 +283,34 @@ function App() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                       Task ID
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
                       Name
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Section
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Assignee
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Start Date
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Due Date
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Priority
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Progress
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Actions
                     </th>
                   </tr>
@@ -311,19 +318,25 @@ function App() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {tasks.map((task) => (
                     <tr key={task.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {task.id}
+                      <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-32">
+                        <div className="truncate" title={task.id}>
+                          {task.id}
+                        </div>
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-900 max-w-xs">
+                      <td className="px-3 py-4 text-sm text-gray-900 max-w-sm">
                         <div className="truncate" title={task.name}>
                           {task.name}
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {task.section}
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 max-w-24">
+                        <div className="truncate" title={task.section}>
+                          {task.section}
+                        </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {task.assignee}
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 max-w-24">
+                        <div className="truncate" title={task.assignee}>
+                          {task.assignee}
+                        </div>
                       </td>
                       <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                         {task.start_date}
@@ -359,7 +372,7 @@ function App() {
                             className="cursor-pointer hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
                             title="Click to edit due date"
                           >
-                            {task.due_date}
+                            {task.due_date || 'No due date'}
                           </span>
                         )}
                       </td>

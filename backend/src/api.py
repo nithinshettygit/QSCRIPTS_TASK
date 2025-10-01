@@ -59,12 +59,16 @@ def load_tasks() -> List[dict]:
     
     try:
         tasks = []
+        seen_ids = set()
         with open(CSV_FILE, 'r', newline='', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
-            for row in reader:
+            for row_num, row in enumerate(reader, start=2):  # Start at 2 for CSV row numbers
                 # Handle BOM in Task ID field
                 task_id = row.get('Task ID') or row.get('ï»¿Task ID')
                 if task_id and row.get('Name'):  # Only include valid rows
+                    # Create unique ID by combining task_id with row number to handle duplicates
+                    unique_id = f"{task_id}_{row_num}"
+                    
                     # Convert due date from DD/MM/YYYY to YYYY-MM-DD if it exists
                     due_date = row.get('Due Date', '').strip()
                     if due_date:
@@ -75,14 +79,26 @@ def load_tasks() -> List[dict]:
                         except:
                             due_date = ''
                     
+                    # Convert start date from DD/MM/YYYY to YYYY-MM-DD if it exists
+                    start_date = row.get('Start Date', '').strip()
+                    if start_date:
+                        try:
+                            # Parse DD/MM/YYYY format
+                            day, month, year = start_date.split('/')
+                            start_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                        except:
+                            start_date = ''
+                    
                     tasks.append({
-                        'id': task_id,
+                        'id': unique_id,
+                        'original_id': task_id,  # Keep original ID for CSV updates
+                        'row_number': row_num,  # Keep row number for CSV updates
                         'name': row['Name'],
                         'due_date': due_date,
                         'section': row.get('Section/Column', ''),
                         'assignee': row.get('Assignee', ''),
                         'assignee_email': row.get('Assignee Email', ''),
-                        'start_date': row.get('Start Date', ''),
+                        'start_date': start_date,
                         'priority': row.get('Priority', ''),
                         'progress': row.get('Task Progress', ''),
                         'notes': row.get('Notes', ''),
@@ -112,19 +128,22 @@ def save_tasks(tasks: List[dict]):
             fieldnames = reader.fieldnames
             original_data = list(reader)
     except:
-        return
+        # If file doesn't exist or is empty, create new with default headers
+        fieldnames = ['Task ID', 'Created At', 'Completed At', 'Last Modified', 'Name', 'Section/Column', 'Assignee', 'Assignee Email', 'Start Date', 'Due Date', 'Tags', 'Notes', 'Projects', 'Parent task', 'Blocked By (Dependencies)', 'Blocking (Dependencies)', 'Priority', 'Task Progress']
+        original_data = []
     
-    # Update the due dates in the original data and add new tasks
+    # Create a map of unique_id to task data for quick lookup
+    task_map = {str(task['id']): task for task in tasks}
+    
+    # Update existing rows using row_number for precise targeting
     for task in tasks:
-        task_id = str(task['id'])
-        task_found = False
-        
-        for row in original_data:
-            # Handle BOM in Task ID field
-            row_task_id = row.get('Task ID') or row.get('ï»¿Task ID')
-            if row_task_id == task_id:
+        if 'row_number' in task:
+            row_index = task['row_number'] - 2  # Convert to 0-based index (subtract 2 for header + 1-based row)
+            if 0 <= row_index < len(original_data):
+                row = original_data[row_index]
+                
                 # Convert YYYY-MM-DD back to DD/MM/YYYY
-                if task['due_date']:
+                if task.get('due_date'):
                     try:
                         year, month, day = task['due_date'].split('-')
                         row['Due Date'] = f"{day}/{month}/{year}"
@@ -132,19 +151,22 @@ def save_tasks(tasks: List[dict]):
                         row['Due Date'] = task['due_date']
                 else:
                     row['Due Date'] = ''
-                task_found = True
-                break
-        
-        # If task not found, it's a new task - add it
-        if not task_found:
+                
+                # Update last_modified if provided
+                if 'last_modified' in task:
+                    row['Last Modified'] = task['last_modified']
+    
+    # Add new tasks that don't have row_number (completely new tasks)
+    for task in tasks:
+        if 'row_number' not in task:
             new_row = {}
             for field in fieldnames:
                 if field == 'ï»¿Task ID' or field == 'Task ID':
-                    new_row[field] = task_id
+                    new_row[field] = task.get('original_id', task['id'])
                 elif field == 'Name':
                     new_row[field] = task['name']
                 elif field == 'Due Date':
-                    if task['due_date']:
+                    if task.get('due_date'):
                         try:
                             year, month, day = task['due_date'].split('-')
                             new_row[field] = f"{day}/{month}/{year}"
@@ -153,7 +175,14 @@ def save_tasks(tasks: List[dict]):
                     else:
                         new_row[field] = ''
                 elif field == 'Start Date':
-                    new_row[field] = task.get('start_date', '')
+                    if task.get('start_date'):
+                        try:
+                            year, month, day = task['start_date'].split('-')
+                            new_row[field] = f"{day}/{month}/{year}"
+                        except:
+                            new_row[field] = task['start_date']
+                    else:
+                        new_row[field] = ''
                 elif field == 'Section/Column':
                     new_row[field] = task.get('section', '')
                 elif field == 'Assignee':
@@ -230,8 +259,10 @@ async def create_or_update_task(task: Task):
     """Create or update a task"""
     tasks_data = load_tasks()
     
-    # Adjust due date if it falls on weekend
-    adjusted_due_date = adjust_weekend_date(task.due_date)
+    # Adjust due date if it falls on weekend (only if due_date is provided)
+    adjusted_due_date = ""
+    if task.due_date and task.due_date.strip():
+        adjusted_due_date = adjust_weekend_date(task.due_date)
     
     if task.id is None or task.id == "":
         # Create new task
@@ -239,7 +270,7 @@ async def create_or_update_task(task: Task):
         new_id = str(int(time.time() * 1000))  # Generate unique ID
         # Convert start_date from YYYY-MM-DD to DD/MM/YYYY if provided
         start_date_formatted = ''
-        if task.start_date:
+        if task.start_date and task.start_date.strip():
             try:
                 year, month, day = task.start_date.split('-')
                 start_date_formatted = f"{day}/{month}/{year}"
@@ -271,6 +302,12 @@ async def create_or_update_task(task: Task):
         for i, existing_task in enumerate(tasks_data):
             if existing_task['id'] == task.id:
                 tasks_data[i]['due_date'] = adjusted_due_date
+                tasks_data[i]['last_modified'] = datetime.now().strftime('%d/%m/%Y')
+                # Preserve row_number for CSV updates
+                if 'row_number' in existing_task:
+                    tasks_data[i]['row_number'] = existing_task['row_number']
+                if 'original_id' in existing_task:
+                    tasks_data[i]['original_id'] = existing_task['original_id']
                 task_found = True
                 break
         
@@ -295,7 +332,7 @@ async def create_or_update_task(task: Task):
     return TaskResponse(
         id=task_details['id'],
         name=task_details['name'],
-        due_date=adjusted_due_date,
+        due_date=task_details['due_date'],
         section=task_details.get('section', ''),
         assignee=task_details.get('assignee', ''),
         assignee_email=task_details.get('assignee_email', ''),
